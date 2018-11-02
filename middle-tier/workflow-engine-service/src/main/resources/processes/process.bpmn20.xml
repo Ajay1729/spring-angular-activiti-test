@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/test">
+    <collaboration id="Collaboration">
+        <participant id="businessProposalFlow" name="New Business Proposal Workflow" processRef="process"></participant>
+    </collaboration>
+    <process id="process" name="New Business Proposal Workflow" isExecutable="true">
+        <laneSet id="laneSet_process">
+            <lane id="sid-13A45DEA-4C71-4FD9-8BEA-29BACC1890EE" name="Creator">
+                <flowNodeRef>sid-6C5E0770-392F-4235-87E7-3BF0B8C3D359</flowNodeRef>
+                <flowNodeRef>storeProposalSm</flowNodeRef>
+                <flowNodeRef>propsalUpload</flowNodeRef>
+                <flowNodeRef>createProposal</flowNodeRef>
+                <flowNodeRef>sid-7B4C84DB-62A5-49ED-9412-F53F1FF41DE1</flowNodeRef>
+            </lane>
+            <lane id="sid-34109EDE-B3A4-4E94-9027-71BF8EB4DC5E" name="Process One">
+                <flowNodeRef>processOneQueue</flowNodeRef>
+                <flowNodeRef>processOneApproval</flowNodeRef>
+                <flowNodeRef>processOneApprovalSm</flowNodeRef>
+                <flowNodeRef>processOneRejected</flowNodeRef>
+            </lane>
+            <lane id="sid-A4EC8FB4-E613-431B-BA06-08784A8B0E55" name="Process Two">
+                <flowNodeRef>processTwoQueue</flowNodeRef>
+                <flowNodeRef>processTwoApproval</flowNodeRef>
+                <flowNodeRef>processTwoRejected</flowNodeRef>
+                <flowNodeRef>processTwoApprovedSm</flowNodeRef>
+                <flowNodeRef>flowComplete</flowNodeRef>
+            </lane>
+        </laneSet>
+        <sequenceFlow id="processTwoQFlow" sourceRef="processOneApprovalSm" targetRef="processTwoQueue"></sequenceFlow>
+        <sequenceFlow id="processOneQFlow" sourceRef="storeProposalSm" targetRef="processOneQueue"></sequenceFlow>
+        <sequenceFlow id="processOneApprovalDecision" name="Decision" sourceRef="processOneQueue"
+                      targetRef="processOneApproval"></sequenceFlow>
+        <sequenceFlow id="fullApprovedFlow" sourceRef="processTwoApprovedSm" targetRef="flowComplete"></sequenceFlow>
+        <sequenceFlow id="processTwoApprovedFlow" name="Approved" sourceRef="processTwoApproval"
+                      targetRef="processTwoApprovedSm">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${processTwoApproval == 'true'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="processTwoRejectedFlow" name="Rejected" sourceRef="processTwoApproval"
+                      targetRef="processTwoRejected">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${processTwoApproval == 'false'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="processOneApprovedFlow" name="Approved" sourceRef="processOneApproval"
+                      targetRef="processOneApprovalSm">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${processOneApproval == 'true'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="processTwoApporvalDecision" name="Decision" sourceRef="processTwoQueue"
+                      targetRef="processTwoApproval"></sequenceFlow>
+        <sequenceFlow id="createWorkflow" sourceRef="sid-6C5E0770-392F-4235-87E7-3BF0B8C3D359"
+                      targetRef="createProposal"></sequenceFlow>
+        <sequenceFlow id="uploadProposalFlow" sourceRef="createProposal" targetRef="propsalUpload"></sequenceFlow>
+        <sequenceFlow id="uploadSuccessfulFlow" name="uploaded" sourceRef="propsalUpload" targetRef="storeProposalSm">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${proposalUploaded == 'true'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="sid-F9C71000-DB7C-48CD-A43D-6C0E6D43AB61" sourceRef="propsalUpload"
+                      targetRef="sid-7B4C84DB-62A5-49ED-9412-F53F1FF41DE1">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${proposalUploaded == 'false'}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="processOneRejectedFlow" name="Rejected" sourceRef="processOneApproval"
+                      targetRef="processOneRejected">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${processOneApproval == 'false'}]]></conditionExpression>
+        </sequenceFlow>
+        <startEvent id="sid-6C5E0770-392F-4235-87E7-3BF0B8C3D359"></startEvent>
+        <serviceTask id="storeProposalSm" name="New Proposal in System"
+                     activiti:expression="&quot;${workItemService.createWorkItem()}&quot;"></serviceTask>
+        <exclusiveGateway id="propsalUpload"></exclusiveGateway>
+        <userTask id="createProposal" name="Create new proposal"></userTask>
+        <endEvent id="sid-7B4C84DB-62A5-49ED-9412-F53F1FF41DE1"></endEvent>
+        <userTask id="processOneQueue" name="Process One Queue"></userTask>
+        <exclusiveGateway id="processOneApproval"></exclusiveGateway>
+        <serviceTask id="processOneApprovalSm" name="Process One Approval in System"
+                     activiti:expression="&quot;${processOneService.approve()}&quot;"></serviceTask>
+        <endEvent id="processOneRejected" name="Rejected State"></endEvent>
+        <userTask id="processTwoQueue" name="Process Two Queue"></userTask>
+        <exclusiveGateway id="processTwoApproval"></exclusiveGateway>
+        <endEvent id="processTwoRejected" name="Rejected State"></endEvent>
+        <serviceTask id="processTwoApprovedSm" name="Process Two Approval in System"
+                     activiti:expression="&quot;${processTwoService.approve()}&quot;"></serviceTask>
+        <endEvent id="flowComplete" name="Approved State"></endEvent>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration">
+        <bpmndi:BPMNPlane bpmnElement="Collaboration" id="BPMNPlane_Collaboration">
+            <bpmndi:BPMNShape bpmnElement="businessProposalFlow" id="BPMNShape_businessProposalFlow">
+                <omgdc:Bounds height="750.0" width="600.0" x="0.0" y="32.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="sid-13A45DEA-4C71-4FD9-8BEA-29BACC1890EE"
+                              id="BPMNShape_sid-13A45DEA-4C71-4FD9-8BEA-29BACC1890EE">
+                <omgdc:Bounds height="250.0" width="570.0" x="30.0" y="32.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="sid-6C5E0770-392F-4235-87E7-3BF0B8C3D359"
+                              id="BPMNShape_sid-6C5E0770-392F-4235-87E7-3BF0B8C3D359">
+                <omgdc:Bounds height="30.0" width="30.0" x="60.0" y="121.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="storeProposalSm" id="BPMNShape_storeProposalSm">
+                <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="96.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="propsalUpload" id="BPMNShape_propsalUpload">
+                <omgdc:Bounds height="40.0" width="40.0" x="255.0" y="116.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="createProposal" id="BPMNShape_createProposal">
+                <omgdc:Bounds height="80.0" width="100.0" x="120.0" y="96.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="sid-7B4C84DB-62A5-49ED-9412-F53F1FF41DE1"
+                              id="BPMNShape_sid-7B4C84DB-62A5-49ED-9412-F53F1FF41DE1">
+                <omgdc:Bounds height="28.0" width="28.0" x="261.0" y="210.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="sid-34109EDE-B3A4-4E94-9027-71BF8EB4DC5E"
+                              id="BPMNShape_sid-34109EDE-B3A4-4E94-9027-71BF8EB4DC5E">
+                <omgdc:Bounds height="250.0" width="570.0" x="30.0" y="282.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processOneQueue" id="BPMNShape_processOneQueue">
+                <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="315.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processOneApproval" id="BPMNShape_processOneApproval">
+                <omgdc:Bounds height="40.0" width="40.0" x="390.0" y="455.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processOneApprovalSm" id="BPMNShape_processOneApprovalSm">
+                <omgdc:Bounds height="80.0" width="100.0" x="135.0" y="435.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processOneRejected" id="BPMNShape_processOneRejected">
+                <omgdc:Bounds height="28.0" width="28.0" x="525.0" y="461.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="sid-A4EC8FB4-E613-431B-BA06-08784A8B0E55"
+                              id="BPMNShape_sid-A4EC8FB4-E613-431B-BA06-08784A8B0E55">
+                <omgdc:Bounds height="250.0" width="570.0" x="30.0" y="532.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processTwoQueue" id="BPMNShape_processTwoQueue">
+                <omgdc:Bounds height="80.0" width="100.0" x="135.0" y="555.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processTwoApproval" id="BPMNShape_processTwoApproval">
+                <omgdc:Bounds height="40.0" width="40.0" x="352.0" y="575.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processTwoRejected" id="BPMNShape_processTwoRejected">
+                <omgdc:Bounds height="28.0" width="28.0" x="525.0" y="581.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="processTwoApprovedSm" id="BPMNShape_processTwoApprovedSm">
+                <omgdc:Bounds height="80.0" width="100.0" x="322.0" y="690.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="flowComplete" id="BPMNShape_flowComplete">
+                <omgdc:Bounds height="28.0" width="28.0" x="525.0" y="716.0"></omgdc:Bounds>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="sid-F9C71000-DB7C-48CD-A43D-6C0E6D43AB61"
+                             id="BPMNEdge_sid-F9C71000-DB7C-48CD-A43D-6C0E6D43AB61">
+                <omgdi:waypoint x="275.39080459770116" y="155.60919540229884"></omgdi:waypoint>
+                <omgdi:waypoint x="275.07999869390954" y="210.00022856583107"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="createWorkflow" id="BPMNEdge_createWorkflow">
+                <omgdi:waypoint x="90.0" y="136.0"></omgdi:waypoint>
+                <omgdi:waypoint x="120.0" y="136.0"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processTwoQFlow" id="BPMNEdge_processTwoQFlow">
+                <omgdi:waypoint x="185.0" y="515.0"></omgdi:waypoint>
+                <omgdi:waypoint x="185.0" y="555.0"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="fullApprovedFlow" id="BPMNEdge_fullApprovedFlow">
+                <omgdi:waypoint x="422.0" y="730.0"></omgdi:waypoint>
+                <omgdi:waypoint x="525.0" y="730.0"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processTwoRejectedFlow" id="BPMNEdge_processTwoRejectedFlow">
+                <omgdi:waypoint x="391.5572289156627" y="595.4427710843373"></omgdi:waypoint>
+                <omgdi:waypoint x="525.0000631257623" y="595.0420418524752"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="uploadProposalFlow" id="BPMNEdge_uploadProposalFlow">
+                <omgdi:waypoint x="220.0" y="136.23696682464455"></omgdi:waypoint>
+                <omgdi:waypoint x="255.4047619047619" y="136.4047619047619"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processOneRejectedFlow" id="BPMNEdge_processOneRejectedFlow">
+                <omgdi:waypoint x="429.57421875" y="475.42578125"></omgdi:waypoint>
+                <omgdi:waypoint x="525.0001059807191" y="475.0544742957949"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processOneApprovalDecision" id="BPMNEdge_processOneApprovalDecision">
+                <omgdi:waypoint x="410.16597510373447" y="395.0"></omgdi:waypoint>
+                <omgdi:waypoint x="410.4166666666667" y="455.4166666666667"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processOneApprovedFlow" id="BPMNEdge_processOneApprovedFlow">
+                <omgdi:waypoint x="390.4555555555556" y="475.4555555555556"></omgdi:waypoint>
+                <omgdi:waypoint x="235.0" y="475.1108647450111"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processTwoApprovedFlow" id="BPMNEdge_processTwoApprovedFlow">
+                <omgdi:waypoint x="372.42910447761193" y="614.570895522388"></omgdi:waypoint>
+                <omgdi:waypoint x="372.14869888475835" y="690.0"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="uploadSuccessfulFlow" id="BPMNEdge_uploadSuccessfulFlow">
+                <omgdi:waypoint x="294.57089552238807" y="136.42910447761193"></omgdi:waypoint>
+                <omgdi:waypoint x="360.0" y="136.18587360594796"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processOneQFlow" id="BPMNEdge_processOneQFlow">
+                <omgdi:waypoint x="410.0" y="176.0"></omgdi:waypoint>
+                <omgdi:waypoint x="410.0" y="315.0"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="processTwoApporvalDecision" id="BPMNEdge_processTwoApporvalDecision">
+                <omgdi:waypoint x="235.0" y="595.1333333333333"></omgdi:waypoint>
+                <omgdi:waypoint x="352.4465240641711" y="595.4465240641712"></omgdi:waypoint>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>
