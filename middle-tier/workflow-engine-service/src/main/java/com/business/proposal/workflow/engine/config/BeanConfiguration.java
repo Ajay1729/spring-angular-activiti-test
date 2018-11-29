@@ -21,9 +21,9 @@ public class BeanConfiguration {
                 group.setType("security-role");
                 identityService.saveGroup(group);
 
-                User admin = identityService.newUser("creator");
-                admin.setPassword("creator");
-                identityService.saveUser(admin);
+                User creator = identityService.newUser("creator");
+                creator.setPassword("creator");
+                identityService.saveUser(creator);
 
             }
         };
